@@ -23,7 +23,7 @@ app.add_exception_handler(Exception, global_exception_handler)
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["http://localhost:5173"], # O ["*"] para desarrollo
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
