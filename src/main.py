@@ -7,8 +7,9 @@ import os
 from src.api.routes.inventory import router as equipment_router
 # Asumiendo que en src/api/routes/persons.py definiste 'router'
 from src.api.routes.persons import router as person_router 
+from src.api.routes.catalog import router as catalog_router
 from src.api.errors import global_exception_handler
-
+from src.api.routes.organizacion import router as org_router
 load_dotenv()
 
 app = FastAPI(
@@ -33,7 +34,8 @@ app.add_middleware(
 # Es recomendable usar prefijos para mantener el orden
 app.include_router(equipment_router, prefix="/api", tags=["Equipments"])
 app.include_router(person_router, prefix="/api", tags=["personas"])
-
+app.include_router(catalog_router, prefix="/api", tags=["Catálogos"])
+app.include_router(org_router, prefix="/api", tags=["Organización y Sedes"])
 @app.get("/")
 def read_root():
     return {"message": "Inventory API Running"}
