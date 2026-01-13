@@ -23,3 +23,7 @@ class ProveedorRentingRead(ProveedorRentingCreate):
     id: int
     # Para compatibilidad con los datos que vienen de Supabase/PostgreSQL
     model_config = ConfigDict(from_attributes=True)
+
+class BulkAssignRequest(BaseModel):
+    equipment_ids: list[int]
+    person_id: int

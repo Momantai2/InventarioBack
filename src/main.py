@@ -1,51 +1,61 @@
+import os
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-import os
 
-# 1. Corregimos las importaciones
+# Importación de Rutas
 from src.api.routes.inventory import router as equipment_router
-# Asumiendo que en src/api/routes/persons.py definiste 'router'
-from src.api.routes.persons import router as person_router 
+from src.api.routes.persons import router as person_router
 from src.api.routes.catalog import router as catalog_router
-from src.api.errors import global_exception_handler
 from src.api.routes.organizacion import router as org_router
+
+# Importación de Manejo de Errores
+from src.api.errors import domain_exception_handler, global_exception_handler
+from src.domain.exceptions import DomainError
+
 load_dotenv()
 
 app = FastAPI(
-    title="Inventory API - Clean Architecture",
-    description="Sistema de gestión de inventarios con FastAPI y Supabase",
-    version="1.0.0"
+    title="Inventory API - Senior Architecture",
+    description="Sistema de gestión de activos con Clean Architecture y Supabase",
+    version="1.1.0"
 )
 
-# Configuración de Errores Globales
+# --- CONFIGURACIÓN DE ERRORES ---
+# Captura errores específicos de lógica de negocio (400, 404, 409, 422)
+app.add_exception_handler(DomainError, domain_exception_handler)
+# Captura errores inesperados del sistema (500)
 app.add_exception_handler(Exception, global_exception_handler)
 
-# Configuración de CORS
+# --- MIDDLEWARES ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # O ["*"] para desarrollo
+    allow_origins=os.getenv("ALLOWED_ORIGINS", "http://localhost:5173").split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 2. Registro de rutas con prefijos claros
-# Es recomendable usar prefijos para mantener el orden
-app.include_router(equipment_router, prefix="/api", tags=["Equipments"])
-app.include_router(person_router, prefix="/api", tags=["personas"])
-app.include_router(catalog_router, prefix="/api", tags=["Catálogos"])
-app.include_router(org_router, prefix="/api", tags=["Organización y Sedes"])
-@app.get("/")
-def read_root():
-    return {"message": "Inventory API Running"}
+# --- REGISTRO DE RUTAS (VERSIONADO) ---
+# Usar /api/v1 es una práctica Senior para permitir cambios futuros sin romper el Front
+api_prefix = "/api"
 
-@app.get("/health")
-def health_check():
-    return {"status": "online", "version": "1.0.0"}
+app.include_router(equipment_router, prefix=api_prefix, tags=["Equipos"])
+app.include_router(person_router, prefix=api_prefix, tags=["Personas"])
+app.include_router(catalog_router, prefix=api_prefix, tags=["Catálogos"])
+app.include_router(org_router, prefix=api_prefix, tags=["Organización"])
+
+@app.get("/", tags=["Health"])
+def read_root():
+    return {
+        "status": "online",
+        "message": "Inventory API Running",
+        "version": "1.1.0"
+    }
 
 if __name__ == "__main__":
-    import uvicorn
     port = int(os.getenv("PORT", 8000))
-    # Importante: El string "src.main:app" debe coincidir con la ruta de tu archivo
-    uvicorn.run("src.main:app", host="0.0.0.0", port=port, reload=True)
+    # El reload solo se activa en desarrollo
+    is_dev = os.getenv("ENVIRONMENT") == "development"
+    uvicorn.run("src.main:app", host="0.0.0.0", port=port, reload=is_dev)

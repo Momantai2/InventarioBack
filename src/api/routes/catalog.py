@@ -1,85 +1,45 @@
-from fastapi import APIRouter, HTTPException
-from typing import List
-from src.infrastructure.supabase_client import supabase  
-from src.schemas.catalog import CatalogRead, CatalogCreate,  ModelRead, ModelCreate
-router = APIRouter()
+from fastapi import APIRouter, Depends
+from src.application.services.catalog_service import CatalogService
+from src.infrastructure.repositories.catalog_repository_impl import CatalogRepositoryImpl
+from src.schemas.catalog import CatalogCreate, ModelCreate,CatalogRead
 
-# --- MARCAS ---
-@router.get("/catalogs/marcas", response_model=List[CatalogRead])
-def get_marcas():
-    res = supabase.table("marcas").select("*").order("nombre").execute()
-    return res.data
+router = APIRouter(tags=["Catálogos"])
 
-@router.post("/catalogs/marcas", response_model=CatalogRead)
-def create_marca(data: CatalogCreate):
-    res = supabase.table("marcas").insert({"nombre": data.nombre.upper()}).execute()
-    if not res.data:
-        raise HTTPException(status_code=400, detail="Error al crear marca")
-    return res.data[0]
+def get_catalog_service():
+    return CatalogService(CatalogRepositoryImpl())
 
-@router.delete("/catalogs/marcas/{id}")
-def delete_marca(id: int):
-    supabase.table("marcas").delete().eq("id", id).execute()
-    return {"status": "deleted"}
+# Endpoints de Marcas
+@router.get("/catalogs/marcas")
+async def list_marcas(service: CatalogService = Depends(get_catalog_service)):
+    return await service.get_marcas()
+
+@router.post("/catalogs/marcas")
+async def add_marca(data: CatalogCreate, service: CatalogService = Depends(get_catalog_service)):
+    return await service.create_marca(data.model_dump())
+
+# Endpoints de Modelos
+@router.get("/catalogs/modelos")
+async def list_modelos(service: CatalogService = Depends(get_catalog_service)):
+    return await service.get_modelos()
+
+@router.post("/catalogs/modelos")
+async def add_modelo(data: ModelCreate, service: CatalogService = Depends(get_catalog_service)):
+    return await service.create_modelo(data.model_dump())
+
+@router.delete("/catalogs/{table}/{id}")
+async def remove_item(table: str, id: int, service: CatalogService = Depends(get_catalog_service)):
+    return await service.delete_item(table, id)
 
 # --- TIPOS DE EQUIPO ---
-@router.get("/catalogs/tipos_equipo", response_model=List[CatalogRead])
-def get_tipos():
-    res = supabase.table("tipos_equipo").select("*").order("nombre").execute()
-    return res.data
+
+@router.get("/catalogs/tipos_equipo", response_model=list[CatalogRead])
+async def list_tipos(service: CatalogService = Depends(get_catalog_service)):
+    return await service.get_tipos_equipo()
 
 @router.post("/catalogs/tipos_equipo", response_model=CatalogRead)
-def create_tipo(data: CatalogCreate):
-    res = supabase.table("tipos_equipo").insert({"nombre": data.nombre.upper()}).execute()
-    return res.data[0]
+async def add_tipo(data: CatalogCreate, service: CatalogService = Depends(get_catalog_service)):
+    return await service.create_tipo_equipo(data.model_dump())
 
 @router.delete("/catalogs/tipos_equipo/{id}")
-def delete_tipo(id: int):
-    supabase.table("tipos_equipo").delete().eq("id", id).execute()
-    return {"status": "deleted"}
-
-# --- MODELOS ---
-
-@router.get("/catalogs/modelos", response_model=List[ModelRead])
-def get_modelos():
-    # Intentaremos una selección explícita para forzar el JOIN
-    res = supabase.table("modelos")\
-        .select("""
-            id, 
-            nombre, 
-            marca_id, 
-            tipo_equipo_id, 
-            marcas!inner(id, nombre), 
-            tipos_equipo!inner(id, nombre)
-        """)\
-        .order("nombre")\
-        .execute()
-    
-    return res.data
-
-@router.post("/catalogs/modelos", response_model=ModelRead)
-def create_modelo(data: ModelCreate):
-    # Insertamos los datos básicos
-    res = supabase.table("modelos").insert({
-        "nombre": data.nombre.upper(),
-        "marca_id": data.marca_id,
-        "tipo_equipo_id": data.tipo_equipo_id
-    }).execute()
-    
-    if not res.data:
-        raise HTTPException(status_code=400, detail="Error al crear el modelo")
-    
-    # Para devolver el objeto completo con sus relaciones, consultamos el ID recién creado
-    nuevo_id = res.data[0]['id']
-    modelo_completo = supabase.table("modelos").select("*, marcas(*), tipos_equipo(*)").eq("id", nuevo_id).single().execute()
-    
-    return modelo_completo.data
-
-@router.delete("/catalogs/modelos/{id}")
-def delete_modelo(id: int):
-    # Nota: Esto fallará si hay equipos usando este modelo (Restricción de Integridad)
-    try:
-        supabase.table("modelos").delete().eq("id", id).execute()
-        return {"status": "deleted"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="No se puede eliminar: el modelo está en uso por equipos.")
+async def remove_tipo(id: int, service: CatalogService = Depends(get_catalog_service)):
+    return await service.delete_tipo_equipo(id)

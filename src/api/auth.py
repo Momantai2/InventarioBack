@@ -1,36 +1,40 @@
 import jwt
 import json
-from jwt import PyJWKClient # Nueva importación
 import os
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
+# Esquema para extraer el token del header Authorization: Bearer <token>
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# Pega aquí el JSON que te dio Supabase entre las comillas triples
-
-
 def get_current_user(token: str = Depends(oauth2_scheme)):
-    # Obtenemos el texto del .env
+    # Obtenemos la llave pública (JWK) de Supabase desde el entorno
     jwk_env = os.getenv("SUPABASE_JWK")
     
     if not jwk_env:
-        raise HTTPException(status_code=500, detail="Configuración JWK faltante")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail="Configuración JWK de autenticación faltante en el servidor"
+        )
 
     try:
-        # Convertimos el texto a diccionario de Python
+        # Convertimos el string JSON del .env a diccionario
         jwk_dict = json.loads(jwk_env)
         
-        # Obtenemos la llave para validar
+        # Obtenemos la llave de firma (Supabase usa ES256 comúnmente)
         signing_key = jwt.PyJWK(jwk_dict)
         
+        # Decodificamos y validamos el token
         payload = jwt.decode(
             token, 
             signing_key.key, 
             algorithms=["ES256"], 
-            options={"verify_aud": False}
+            options={"verify_aud": False} # Supabase a veces requiere esto dependiendo de la config
         )
         return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="El token ha expirado")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
     except Exception as e:
-        print(f"Error Auth: {e}")
-        raise HTTPException(status_code=401, detail="No autorizado")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Error de autenticación: {str(e)}")
