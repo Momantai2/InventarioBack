@@ -7,7 +7,10 @@ from src.infrastructure.supabase_client import supabase
 from fastapi import Depends
 from datetime import datetime
 from typing import Optional
+from datetime import date
+from fastapi.encoders import jsonable_encoder
 
+from src.schemas.inventory import EquipmentCreate, ProveedorRentingCreate, ProveedorRentingRead
 router = APIRouter(tags=["Equipos"])
 repo = EquipmentRepositoryImpl()
 
@@ -61,19 +64,16 @@ async def get_all_equipments(search: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 # src/api/routes.py
 
-@router.put("/equipos/{equipment_id}")
-async def update_equipment(equipment_id: int, data: EquipmentCreate):
-    # 1. Validar duplicado (excluyendo el equipo actual)
-    if repo.exists_by_serie(data.serie, exclude_id=equipment_id):
-        raise HTTPException(
-            status_code=409, 
-            detail=f"No se puede actualizar: la serie '{data.serie}' ya pertenece a otro equipo."
-        )
-    
+@router.patch("/equipos/{id}") # <-- Asegúrate que sea .patch
+async def update_equipment(id: int, updates: dict):
     try:
-        update_data = data.model_dump()
-        result = repo.update(equipment_id, update_data)
-        return {"message": "Equipo actualizado", "data": result}
+        # Supabase hace el "partial update" automáticamente con .update(dict)
+        res = supabase.table("equipos").update(updates).eq("id", id).execute()
+        
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Equipo no encontrado")
+            
+        return res.data[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -98,12 +98,25 @@ async def get_states():
 
 @router.get("/ubicaciones")
 async def get_locations():
-    # Mejora: formatear el nombre para que el Select se vea bien
-    result = supabase.table("ubicaciones_detalladas").select("id, piso_oficina, areas(nombre)").execute()
-    return [
-        {"id": u["id"], "nombre": f"{u['areas']['nombre']} - {u['piso_oficina']}"} 
-        for u in result.data
-    ]
+    try:
+        # Hacemos el JOIN con sedes_agencias y areas
+        result = supabase.table("ubicaciones_detalladas").select("""
+            id, 
+            piso_oficina, 
+            areas(nombre), 
+            sedes_agencias(nombre)
+        """).execute()
+        
+        # Formateamos el nombre para que el usuario vea: "SEDE - ÁREA (PISO)"
+        return [
+            {
+                "id": u["id"], 
+                "nombre": f"{u['sedes_agencias']['nombre']} - {u['areas']['nombre']} ({u['piso_oficina']})"
+            } 
+            for u in result.data
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 @router.patch("/equipos/{eq_id}/assign")
 async def assign_equipment(eq_id: int, data: dict):
@@ -227,3 +240,51 @@ async def bulk_assign_equipment(payload: dict):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+#proovedores
+# CORRECCIÓN: El response_model debe ser list[ProveedorRentingRead]
+@router.get("/proveedores_renting", response_model=list[ProveedorRentingRead])
+async def get_proveedores_renting_list(): # Cambia el nombre para no chocar con el endpoint
+    try:
+        res = supabase.table("proveedores_renting").select("*").order("nombre").execute()
+        return res.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/proveedores_renting", response_model=ProveedorRentingRead)
+async def create_proveedor_renting(data: ProveedorRentingCreate):
+    try:
+        # Convertimos el modelo Pydantic a un formato compatible con JSON
+        # Esto transforma automáticamente los objetos 'date' a strings 'YYYY-MM-DD'
+        insert_data = jsonable_encoder(data)
+        
+        # Insertamos en Supabase
+        res = supabase.table("proveedores_renting").insert(insert_data).execute()
+        
+        if not res.data:
+            raise HTTPException(status_code=400, detail="No se pudo insertar en la base de datos")
+            
+        return res.data[0]
+    except Exception as e:
+        print(f"Error de base de datos: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error en inserción: {str(e)}")
+
+# Agregamos el GET para el select del formulario de equipos
+@router.get("/proveedores_select")
+async def get_proveedores_for_select():
+    try:
+        result = supabase.table("proveedores_renting").select("id, nombre").execute()
+        return result.data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/check-serie/{serie}")
+async def check_serie(serie: str, exclude_id: Optional[int] = None):
+    query = supabase.table("equipos").select("id").ilike("serie", serie)
+    
+    # Si recibimos el ID, lo excluimos de los resultados
+    if exclude_id:
+        query = query.neq("id", exclude_id)
+        
+    result = query.execute()
+    return {"exists": len(result.data) > 0}
