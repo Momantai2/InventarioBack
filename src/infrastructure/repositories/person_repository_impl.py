@@ -5,11 +5,29 @@ class PersonRepositoryImpl:
     def __init__(self):
         self.table = "personas"
 
-    def get_all(self, search: str = None) -> List[Dict[str, Any]]:
-        query = supabase.table(self.table).select("*, areas(nombre)")
+    def get_all(self, search: str = None):
+        """Obtiene personas con sus áreas y la lista de jefes de cada área."""
+        # Definimos el query con la relación anidada de jefes
+        query = supabase.table(self.table).select("""
+            *,
+            areas (
+                id,
+                nombre,
+                jefes:personas!area_id (
+                    nombre_completo,
+                    jefe_area
+                )
+            )
+        """)
+
+        # Corregimos la indentación de la lógica de búsqueda
         if search:
+            # Filtramos por nombre o DNI
             query = query.or_(f"nombre_completo.ilike.%{search}%,dni.ilike.%{search}%")
-        return query.order("nombre_completo").execute().data
+
+        # Ejecutamos y retornamos los datos ordenados
+        result = query.order("nombre_completo").execute()
+        return result.data
 
     def get_by_id(self, person_id: int) -> Dict[str, Any]:
         result = supabase.table(self.table).select("*").eq("id", person_id).single().execute()
