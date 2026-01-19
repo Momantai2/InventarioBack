@@ -28,7 +28,7 @@ async def get_stock_alerts(service: InsumoService = Depends(get_insumo_service))
 async def create_insumo(data: InsumoCreate, service: InsumoService = Depends(get_insumo_service)):
     return await service.add_insumo(data.model_dump())
 
-@router.put("/{id}", response_model=InsumoRead)
+@router.patch("/{id}", response_model=InsumoRead)
 async def update_insumo(id: int, data: InsumoCreate, service: InsumoService = Depends(get_insumo_service)):
     return await service.modify_insumo(id, data.model_dump())
 

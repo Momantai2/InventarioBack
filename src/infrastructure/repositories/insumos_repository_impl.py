@@ -5,8 +5,11 @@ class InsumoRepositoryImpl:
 
 # TABLA INSUMOS
     def get_all_insumos(self):
-        return supabase.table("insumos").select("*, tipos_equipo(nombre)").order("nombre").execute().data
-
+        return supabase.table("insumos")\
+            .select("*, tipos_equipo(nombre)")\
+            .eq("activo", True)\
+            .order("nombre")\
+            .execute().data
     # READ ONE
     def get_insumo_by_id(self, insumo_id: int):
         return supabase.table("insumos").select("*").eq("id", insumo_id).single().execute().data
@@ -22,15 +25,16 @@ class InsumoRepositoryImpl:
 
     # DELETE
     def delete_insumo(self, insumo_id: int):
-        return supabase.table("insumos").delete().eq("id", insumo_id).execute()
+        return supabase.table("insumos").update({"activo": False}).eq("id", insumo_id).execute()
     
     
     #TABLA HISOTRIAL INSUMOS
     
     def get_all_movimientos_insumos(self):
         return supabase.table("movimientos_insumos")\
-        .select("*, insumos(nombre), personas(nombre_completo)")\
-        .order("fecha", desc=True).execute().data
+            .select("*, insumos(nombre, tipo_equipo_id), personas(nombre_completo)")\
+            .order("fecha", desc=True)\
+            .execute().data
 
     def get_movimientos_insumo_by_id(self, insumo_id: int):
         return supabase.table("movimientos_insumos").select("*").eq("id", insumo_id).single().execute().data
@@ -69,3 +73,8 @@ class InsumoRepositoryImpl:
         .select("*, insumos(nombre)")\
         .eq("personal_id", persona_id)\
         .order("fecha", desc=True).execute().data
+    
+    def get_by_name(self, nombre: str):
+    # .ilike hace una búsqueda insensible a mayúsculas/minúsculas
+        result = supabase.table("insumos").select("*").ilike("nombre", nombre).execute()
+        return result.data[0] if result.data else None

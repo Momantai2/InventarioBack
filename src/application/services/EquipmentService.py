@@ -30,48 +30,7 @@ class EquipmentService:
     async def delete_equipment(self, eq_id: int):
         return self.repo.delete(eq_id)
 
-    # --- Lógica de Asignación y Procesos ---
-    async def assign_equipment(self, eq_id: int, nuevo_usuario_id: int):
-        ahora = datetime.now().isoformat()
-        equipo = self.repo.get_by_id(eq_id)
-        
-        if not equipo: raise EntityNotFoundError("Equipo no encontrado")
-        if equipo.get("estado_id") == 4: # ESTADO_BAJA
-            raise BusinessRuleError("No se puede asignar un equipo inoperativo.")
-
-        update_data = {
-            "personal_usuario_id": nuevo_usuario_id,
-            "fecha_asignacion": ahora,
-            "estado_id": 2 # ASIGNADO
-        }
-
-        usuario_previo_id = equipo.get("personal_usuario_id")
-        if usuario_previo_id and usuario_previo_id != nuevo_usuario_id:
-            update_data["personal_anterior_id"] = usuario_previo_id
-            update_data["fecha_devolucion"] = ahora
-
-        return self.repo.update(eq_id, update_data)
-
-    async def release_equipment(self, eq_id: int):
-        ahora = datetime.now().isoformat()
-        equipo = self.repo.get_by_id(eq_id)
-        if not equipo: raise EntityNotFoundError("Equipo no encontrado")
-
-        usuario_actual_id = equipo.get("personal_usuario_id")
-        if not usuario_actual_id: return {"message": "Ya está liberado"}
-
-        return self.repo.update(eq_id, {
-            "personal_usuario_id": None,
-            "personal_anterior_id": usuario_actual_id,
-            "fecha_devolucion": ahora,
-            "estado_id": 1, # DISPONIBLE
-            "fecha_asignacion": None
-        })
-
-    async def bulk_assign(self, ids: list, person_id: int):
-        if not ids or not person_id:
-            raise BusinessRuleError("Faltan IDs de equipos o de la persona")
-        return self.repo.bulk_update_assign(ids, person_id)
+    # --- procesos
     
     async def check_serie_availability(self, serie: str, exclude_id: int = None) -> bool:
         

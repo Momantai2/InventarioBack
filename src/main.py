@@ -10,6 +10,7 @@ from src.api.routes.persons import router as person_router
 from src.api.routes.catalog import router as catalog_router
 from src.api.routes.organizacion import router as org_router
 from src.api.routes.insumos import router as insumos_router, router1 as movimientos_router
+from src.api.routes.asignaciones import router as asignaciones_router
 
 # Importación de Manejo de Errores
 from src.api.errors import domain_exception_handler, global_exception_handler
@@ -48,6 +49,7 @@ app.include_router(catalog_router, prefix=api_prefix, tags=["Catálogos"])
 app.include_router(org_router, prefix=api_prefix, tags=["Organización"])
 app.include_router(insumos_router, prefix=api_prefix)
 app.include_router(movimientos_router, prefix=api_prefix)
+app.include_router(asignaciones_router, prefix=api_prefix)
 
 @app.get("/", tags=["Health"])
 def read_root():

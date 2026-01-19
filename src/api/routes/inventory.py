@@ -23,13 +23,6 @@ async def check_serie(
     exists = await service.check_serie_availability(serie, exclude_id)
     return {"exists": exists}
 
-# --- 2. RUTAS DE ACCIÓN MASIVA (DEBEN IR ANTES QUE {id}) ---
-@router.patch("/equipos/bulk-assign")
-async def bulk_assign(
-    payload: BulkAssignRequest, 
-    service: EquipmentService = Depends(get_service)
-):
-    return await service.bulk_assign(payload.equipment_ids, payload.person_id)
 
 # --- 3. RUTAS DE CATÁLOGOS ---
 @router.get("/modelos")
@@ -56,15 +49,6 @@ async def update(id: int, updates: dict, service: EquipmentService = Depends(get
 @router.delete("/equipos/{id}")
 async def delete(id: int, service: EquipmentService = Depends(get_service)):
     return await service.delete_equipment(id)
-
-@router.patch("/equipos/{id}/assign")
-async def assign(id: int, data: dict, service: EquipmentService = Depends(get_service)):
-    return await service.assign_equipment(id, data.get("personal_usuario_id"))
-
-@router.patch("/equipos/{id}/release")
-async def release(id: int, service: EquipmentService = Depends(get_service)):
-    return await service.release_equipment(id)
-
 # --- 5. PROVEEDORES RENTING ---
 @router.get("/proveedores_renting", response_model=list[ProveedorRentingRead])
 async def list_proveedores(service: EquipmentService = Depends(get_service)):
