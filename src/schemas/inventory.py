@@ -27,3 +27,4 @@ class ProveedorRentingRead(ProveedorRentingCreate):
 class BulkAssignRequest(BaseModel):
     equipment_ids: list[int]
     person_id: int
+    

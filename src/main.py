@@ -9,6 +9,7 @@ from src.api.routes.inventory import router as equipment_router
 from src.api.routes.persons import router as person_router
 from src.api.routes.catalog import router as catalog_router
 from src.api.routes.organizacion import router as org_router
+from src.api.routes.insumos import router as insumos_router, router1 as movimientos_router
 
 # Importación de Manejo de Errores
 from src.api.errors import domain_exception_handler, global_exception_handler
@@ -17,9 +18,9 @@ from src.domain.exceptions import DomainError
 load_dotenv()
 
 app = FastAPI(
-    title="Inventory API - Senior Architecture",
-    description="Sistema de gestión de activos con Clean Architecture y Supabase",
-    version="1.1.0"
+    title="Inventory API",
+    description="Sistema de gestión de activos",
+    version="1.0"
 )
 
 # --- CONFIGURACIÓN DE ERRORES ---
@@ -45,6 +46,8 @@ app.include_router(equipment_router, prefix=api_prefix, tags=["Equipos"])
 app.include_router(person_router, prefix=api_prefix, tags=["Personas"])
 app.include_router(catalog_router, prefix=api_prefix, tags=["Catálogos"])
 app.include_router(org_router, prefix=api_prefix, tags=["Organización"])
+app.include_router(insumos_router, prefix=api_prefix)
+app.include_router(movimientos_router, prefix=api_prefix)
 
 @app.get("/", tags=["Health"])
 def read_root():
