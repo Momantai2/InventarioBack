@@ -12,24 +12,22 @@ class EquipmentRepositoryImpl:
         return result.data
 
     def get_all(self, search: str = None) -> List[Dict[str, Any]]:
-        """Consulta pesada con JOINs para la tabla principal."""
-        query = supabase.table(self.table).select("""
-            *,
-            modelos(nombre, marcas(nombre), tipos_equipo(nombre) ),
-            estados(nombre),
-            ubicaciones_detalladas(piso_oficina, areas(nombre),sedes_agencias(*))),
-            proveedores_renting(nombre),
-            personas:personas!equipos_personal_usuario_id_fkey(
-                nombre_completo, dni, 
-                areas(id, nombre, jefes:personas!area_id(nombre_completo, jefe_area))
-            ),
-            anterior:personas!equipos_personal_anterior_id_fkey(nombre_completo)
-        """)
+     query = supabase.table(self.table).select("""
+        *,
+        modelos(nombre, marcas(nombre), tipos_equipo(nombre)),
+        estados(nombre),
+        ubicaciones_detalladas(piso_oficina, areas(nombre), sedes_agencias(nombre)),
+        proveedores_renting(nombre),
+        personas:personas!personal_usuario_id(nombre_completo, dni, 
+            areas(id, nombre, jefes:personas!area_id(nombre_completo, jefe_area))
+        ),
+        anterior:personas!personal_anterior_id(nombre_completo, dni)
+    """)
+    
+     if search:
+        query = query.ilike("serie", f"%{search}%")
         
-        if search:
-            query = query.ilike("serie", f"%{search}%")
-            
-        return query.execute().data
+     return query.execute().data
 
     def create_data(self, data: dict) -> Dict[str, Any]:
         result = supabase.table(self.table).insert(data).execute()
