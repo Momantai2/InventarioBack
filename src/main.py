@@ -11,10 +11,11 @@ from src.api.routes.catalog import router as catalog_router
 from src.api.routes.organizacion import router as org_router
 from src.api.routes.insumos import router as insumos_router, router1 as movimientos_router
 from src.api.routes.asignaciones import router as asignaciones_router
+from src.api.routes.matenimiento import router as mantenimientos_router, router1 as movimientos_mantenimiento
 
 # Importación de Manejo de Errores
-from src.api.errors import domain_exception_handler, global_exception_handler
 from src.domain.exceptions import DomainError
+from src.api.errors import domain_exception_handler, global_exception_handler
 
 load_dotenv()
 
@@ -50,6 +51,8 @@ app.include_router(org_router, prefix=api_prefix, tags=["Organización"])
 app.include_router(insumos_router, prefix=api_prefix)
 app.include_router(movimientos_router, prefix=api_prefix)
 app.include_router(asignaciones_router, prefix=api_prefix)
+app.include_router(mantenimientos_router, prefix=api_prefix)
+app.include_router(movimientos_mantenimiento, prefix=api_prefix)
 
 @app.get("/", tags=["Health"])
 def read_root():

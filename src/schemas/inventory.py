@@ -21,6 +21,7 @@ class ProveedorRentingCreate(BaseModel):
 
 class ProveedorRentingRead(ProveedorRentingCreate):
     id: int
+    
     # Para compatibilidad con los datos que vienen de Supabase/PostgreSQL
     model_config = ConfigDict(from_attributes=True)
 

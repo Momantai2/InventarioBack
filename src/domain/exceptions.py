@@ -11,5 +11,10 @@ class EntityNotFoundError(DomainError):
     pass
 
 class BusinessRuleError(DomainError):
-    """Cuando se rompe una regla de negocio (ej: asignar equipo inoperativo)"""
+    """Cuando se rompe una regla de negocio"""
+    pass
+
+# AÑADE ESTA CLASE:
+class BadRequestError(DomainError):
+    """Cuando los datos enviados son incorrectos o la petición es inválida"""
     pass
