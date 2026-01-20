@@ -9,7 +9,7 @@ class TunedModel(BaseModel):
 class HistorialAsignacionesBase(BaseModel):
     """Campos comunes para la gestión de asignaciones."""
     equipo_id: int
-    persona_id: int
+    persona_id: Optional[int] = None
     tipo_movimiento_id: int
     # Usamos default_factory para que se asigne la hora exacta al crear el objeto
     fecha_inicio: datetime = Field(default_factory=datetime.now)

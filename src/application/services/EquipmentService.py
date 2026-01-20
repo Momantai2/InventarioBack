@@ -8,6 +8,7 @@ class EquipmentService:
 
     # --- Lógica de Equipos ---
     async def get_all_equipments(self, search: str = None):
+        print(self.repo.get_all)
         return self.repo.get_all(search)
 
     async def create_equipment(self, data: dict):

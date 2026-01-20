@@ -15,9 +15,9 @@ class EquipmentRepositoryImpl:
         """Consulta pesada con JOINs para la tabla principal."""
         query = supabase.table(self.table).select("""
             *,
-            modelos(nombre, marcas(nombre)),
+            modelos(nombre, marcas(nombre), tipos_equipo(nombre) ),
             estados(nombre),
-            ubicaciones_detalladas(piso_oficina, areas(nombre)),
+            ubicaciones_detalladas(piso_oficina, areas(nombre),sedes_agencias(*))),
             proveedores_renting(nombre),
             personas:personas!equipos_personal_usuario_id_fkey(
                 nombre_completo, dni, 

@@ -12,6 +12,8 @@ def get_service():
 # --- 1. RUTAS DE COLECCIÓN / BÚSQUEDA ---
 @router.get("/equipos")
 async def list_equipos(search: Optional[str] = Query(None), service: EquipmentService = Depends(get_service)):
+    print(service.get_all_equipments)
+
     return await service.get_all_equipments(search)
 
 @router.get("/check-serie/{serie}")
