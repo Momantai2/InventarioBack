@@ -1,65 +1,78 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
+from src.schemas.common import CommonBaseRead, CommonBaseCreate,CommonBaseUpdate,CommonBasePagedResponse
 
-# --- Estructura Organizacional ---
-class GerenciaRead(BaseModel):
-    id: int
-    nombre: str
-
-class AreaCreate(BaseModel):
-    nombre: str
-    gerencia_id: int
-
-class AreaRead(BaseModel):
-    id: int
-    nombre: str
-    gerencia_id: int
-    gerencias: Optional[GerenciaRead] = None # Relación anidada
-
-# --- Estructura Física (Ubicaciones) ---
-class DepartamentoRead(BaseModel):
-    id: int
-    nombre: str
-
-class TipoLocalRead(BaseModel):
-    id: int
-    nombre: str
-
-class SedeCreate(BaseModel):
-    nombre: str
-    departamento_id: int
-    tipo_local_id: int
-
-class SedeRead(BaseModel):
-    id: int
-    nombre: str
-    departamento_id: int
-    tipo_local_id: int
-    departamentos: Optional[DepartamentoRead] = None
-    tipos_local: Optional[TipoLocalRead] = None
+class GerenciaRead(CommonBaseRead):
+    pass
+GerenciaPagedResponse = CommonBasePagedResponse[GerenciaRead]
+class GerenciaCreate(CommonBaseCreate):
+    pass
+class GerenciaUpdate(CommonBaseUpdate):
+    pass
+class AreaRead(CommonBaseRead):
+    gerencias : Optional[GerenciaRead] = None
     
-class CatalogBase(BaseModel):
-    nombre: str
+AreaPagedResponse = CommonBasePagedResponse[AreaRead]
 
-class GerenciaCreate(CatalogBase): pass
-class DepartamentoCreate(CatalogBase): pass
-class TipoLocalCreate(CatalogBase): pass
+class AreaCreate(CommonBaseCreate):
+    gerencia_id: int
+class AreaUpdate(CommonBaseUpdate):
+    gerencia_id: Optional[int] = None
 
-# --- Ubicaciones Detalladas ---
+class DepartamentosRead(CommonBaseRead):
+    pass
+DepartamentoPagedResponse = CommonBasePagedResponse[DepartamentosRead]
 
-class UbicacionDetalladaCreate(BaseModel):
-    area_id: int
-    sede_id: int
-    piso_oficina: str
+class DepartamentosCreate(CommonBaseCreate):
+    pass
+class DepartamentosUpdate(CommonBaseUpdate):
+    pass
 
-class UbicacionDetalladaRead(BaseModel):
+class TiposLocalRead(CommonBaseRead):
+    pass
+TiposLocalPagedResponse = CommonBasePagedResponse[TiposLocalRead]
+
+class TiposLocalCreate(CommonBaseCreate):
+    pass
+class TiposLocalUpdate(CommonBaseUpdate):
+    pass
+
+
+class SedesAgenciasRead(CommonBaseRead):
+    departamentos: Optional[DepartamentosRead] = None
+    tipos_local: Optional[TiposLocalRead] = None
+    
+SedesAgenciasPagedResponse = CommonBasePagedResponse[SedesAgenciasRead]
+
+    
+class SedesAgenciasCreate(CommonBaseCreate):
+    departamento_id: int
+    tipo_local_id: int
+class SedesAgenciasUpdate(CommonBaseUpdate):
+    departamento_id: Optional[int] = None
+    tipo_local_id: Optional[int] = None
+
+class UbicacionesDetalladasRead(BaseModel):
     id: int
+    piso_oficina: str
+    areas: Optional[AreaRead] = None
+    sedes_agencias: Optional[SedesAgenciasRead] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+    
+UbicacionesDetalladasPagedResponse = CommonBasePagedResponse[UbicacionesDetalladasRead]
+
+class UbicacionesDetalladasCreate(BaseModel):
     area_id: int
     sede_id: int
     piso_oficina: str
-    # Relaciones anidadas para mostrar en el frontend
-    areas: Optional[AreaRead] = None
-    sedes_agencias: Optional[SedeRead] = None
+    activo: bool = True
 
-    class Config:
-        from_attributes = True
+class UbicacionesDetalladaUpdate(BaseModel):
+    area_id: Optional[int] = None
+    sede_id: Optional[int] = None
+    piso_oficina: Optional[str] = None
+    activo: Optional[bool] = None
+
+
+
