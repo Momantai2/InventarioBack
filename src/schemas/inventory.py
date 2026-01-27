@@ -1,9 +1,10 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional,Any
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional, Any, List
 from datetime import date
+from src.schemas.common import AuditoriaBase, CommonBasePagedResponse
 
-class EquipmentCreate(BaseModel):
-    serie: str
+class EquipmentBase(BaseModel):
+    serie: str = Field(..., min_length=3)
     modelo_id: int
     estado_id: int
     ubicacion_id: int
@@ -12,6 +13,30 @@ class EquipmentCreate(BaseModel):
     specs: dict[str, Any] = {}
     observaciones: Optional[str] = None
 
+class EquipmentCreate(EquipmentBase):
+    pass
+
+class EquipmentUpdate(BaseModel):
+    serie: Optional[str] = None
+    modelo_id: Optional[int] = None
+    estado_id: Optional[int] = None
+    ubicacion_id: Optional[int] = None
+    proveedor_id: Optional[int] = None
+    personal_usuario_id: Optional[int] = None
+    specs: Optional[dict[str, Any]] = None
+    observaciones: Optional[str] = None
+
+class EquipmentRead(EquipmentBase, AuditoriaBase):
+    id: int
+    # Campos virtuales que vienen del JOIN
+    modelos: Optional[dict] = None
+    estados: Optional[dict] = None
+    ubicaciones_detalladas: Optional[dict] = None
+    personas: Optional[dict] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+EquipmentPagedResponse = CommonBasePagedResponse[EquipmentRead]
 
 class ProveedorRentingCreate(BaseModel):
     nombre: str
@@ -21,11 +46,5 @@ class ProveedorRentingCreate(BaseModel):
 
 class ProveedorRentingRead(ProveedorRentingCreate):
     id: int
-    
-    # Para compatibilidad con los datos que vienen de Supabase/PostgreSQL
-    model_config = ConfigDict(from_attributes=True)
 
-class BulkAssignRequest(BaseModel):
-    equipment_ids: list[int]
-    person_id: int
-    
+

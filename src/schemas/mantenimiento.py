@@ -56,3 +56,4 @@ class TipoMantenimientoRead(TipoMantenimientoBase):
 
     class Config:
         from_attributes = True
+        
