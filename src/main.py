@@ -16,7 +16,7 @@ from src.api.routes.dashboard import router as dashboard_router
 # Importación de Manejo de Errores
 from src.domain.exceptions import DomainError
 from src.api.errors import domain_exception_handler, global_exception_handler
-
+from src.api.routes import proveedor_renting as proveedores_router
 load_dotenv()
 
 app = FastAPI(
@@ -54,7 +54,7 @@ app.include_router(asignaciones_router, prefix=api_prefix)
 app.include_router(mantenimientos_router, prefix=api_prefix)
 app.include_router(movimientos_mantenimiento, prefix=api_prefix)
 app.include_router(dashboard_router, prefix=api_prefix)
-
+app.include_router(proveedores_router.router, prefix=api_prefix)
 @app.get("/", tags=["Health"])
 def read_root():
     return {

@@ -33,6 +33,7 @@ class EquipmentRead(EquipmentBase, AuditoriaBase):
     estados: Optional[dict] = None
     ubicaciones_detalladas: Optional[dict] = None
     personas: Optional[dict] = None
+    proveedores_renting : Optional[dict] = None
 
     model_config = ConfigDict(from_attributes=True)
 

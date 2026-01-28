@@ -42,10 +42,14 @@ class EquipmentRepositoryImpl:
         }
 
     def get_by_id(self, equipment_id: int) -> Optional[Dict[str, Any]]:
-        # Traemos el detalle completo para cuando se necesite ver la ficha del equipo
-        result = supabase.table(self.table).select("*, modelos(*), personas(*)")\
-            .eq("id", equipment_id).execute()
-        return result.data[0] if result.data else None
+     # Especificamos explícitamente la relación del usuario actual con !
+     result = supabase.table(self.table).select("""
+        *, 
+        modelos(*), 
+        personas:personas!personal_usuario_id(*)
+    """).eq("id", equipment_id).execute()
+    
+     return result.data[0] if result.data else None
 
     def exists_by_serie(self, serie: str, exclude_id: Optional[int] = None) -> bool:
         db_query = supabase.table(self.table).select("id").ilike("serie", serie.strip())
@@ -74,6 +78,11 @@ class EquipmentRepositoryImpl:
         return supabase.table("ubicaciones_detalladas").select("""
             id, piso_oficina, areas(nombre), sedes_agencias(nombre)
         """).eq("activo", True).execute().data
+    
+    # Agrega o corrige esto en EquipmentRepositoryImpl
+    def get_estados(self):
+        """Consulta la tabla de estados ordenada por ID."""
+        return supabase.table("estados").select("*").order("id").execute().data
 
     # Agregar estos métodos a EquipmentRepositoryImpl en src/infrastructure/repositories/equipment_repository_impl.py
 

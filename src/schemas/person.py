@@ -33,4 +33,10 @@ class PersonasUpdate(BaseModel):
     jefe_area: Optional[bool] = None
     activo: Optional[bool] = None
 
-    
+class JefeInfo(BaseModel):
+    nombre_completo: str
+    jefe_area: bool
+
+class AreaWithJefes(AreaRead):
+    # Aquí permitimos que 'jefes' sea una lista de personas (subconsulta)
+    jefes: List[JefeInfo] = []

@@ -17,7 +17,7 @@ class HistorialAsignacionesService:
             raise BusinessRuleError("No se puede asignar un equipo que está en BAJA")
 
         # 1. Cerrar asignación anterior si existe (Auditoría)
-        activa = self.hist_repo.get_active_by_equipo(equipo_id)
+        activa = self.hist_repo.get_active_assignment_details(equipo_id)
         if activa:
             self.hist_repo.close_assignment(activa["id"], ahora)
 
@@ -50,7 +50,7 @@ class HistorialAsignacionesService:
         persona_que_devuelve = equipo.get("personal_usuario_id")
 
         # 1. Cerrar la asignación actual en historial
-        activa = self.hist_repo.get_active_by_equipo(equipo_id)
+        activa = self.hist_repo.get_active_assignment_details(equipo_id)
         if activa:
             self.hist_repo.close_assignment(activa["id"], ahora)
 
@@ -87,7 +87,7 @@ class HistorialAsignacionesService:
             raise BusinessRuleError("No se puede transferir un equipo que no está asignado. Use 'Asignar'.")
 
         # 1. Cerrar la posesión del usuario actual
-        activa = self.hist_repo.get_active_by_equipo(equipo_id)
+        activa = self.hist_repo.get_active_assignment_details(equipo_id)
         if activa:
             self.hist_repo.close_assignment(activa["id"], ahora)
 
@@ -118,7 +118,7 @@ class HistorialAsignacionesService:
             raise EntityNotFoundError("Equipo no encontrado")
 
         # 1. Cerrar cualquier asignación activa antes de dar la baja
-        activa = self.hist_repo.get_active_by_equipo(equipo_id)
+        activa = self.hist_repo.get_active_assignment_details(equipo_id)
         if activa:
             self.hist_repo.close_assignment(activa["id"], ahora)
 
